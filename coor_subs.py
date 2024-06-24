@@ -102,6 +102,17 @@ def get_head_tail(gjf):
     tail=lines[sl[2]:]
     return head,tail
 
+def pdb_coor(file):
+    with open(file,'r') as pdb:
+        lines = pdb.readlines()
+        coor_lines = []
+        for line in lines:
+            if line.startswith(('ATOM','HETATM')) and len(line.split()) > 9:
+                tmp =line.split()[6:9]
+                tmp.insert(0,line.split()[0])
+                coor_lines.append(' '.join(tmp))
+        coors = getcoords(coor_lines)
+    return coors
 
 if __name__ == '__main__' :
     f1 = sys.argv[1]
@@ -110,18 +121,28 @@ if __name__ == '__main__' :
     prefi = fnm.stem
     head, tail = get_head_tail(f1)
     atline, ori_coor = get_coors(f1)
-    atline2, can_coor = get_coors(f2)    
+    if f2.endswith('.gjf'):
+        atline2, can_coor = get_coors(f2)    
+    elif f2.endswith('.pdb'):
+        can_coor = pdb_coor(f2)
     fw = open(prefi+'-CH.gjf','w')
     fw.writelines(head)    
-    print(atline[:12])
     for i in range(len(ori_coor)):    
         tmp = atline[i].split()
-        
+        '''
         tmp[2] = str(round(can_coor[i][0],6))
         tmp[3] = str(round(can_coor[i][1],6))
         tmp[4] = str(round(can_coor[i][2],6))
-        print(tmp)
-        atline[i] = ' '.join(tmp)
+        '''
+        tmp[2] = round(can_coor[i][0],6)
+        tmp[3] = round(can_coor[i][1],6)
+        tmp[4] = round(can_coor[i][2],6)
+        #atline[i] =f'{tmp[0]}   {tmp[1]}  {tmp[2]:6f}  {tmp[3]:6f}  {tmp[4]:6f} {tmp[5]}' 
+        #if len(tmp) == 6:
+        #    atline[i] = ' %-14s %-3s %-10.6f %-10.6f %-10.6f %s %s ' % (tmp[0],tmp[1],tmp[2],tmp[3],tmp[4],tmp[5],tmp[6])
+        #else:
+        atline[i] = ' %-14s %-3s %-10.6f %-10.6f %-10.6f %s' % (tmp[0],tmp[1],tmp[2],tmp[3],tmp[4],' '.join(tmp[5:]))
+        
         fw.write(atline[i]+'\n')
     
     fw.writelines(tail)
